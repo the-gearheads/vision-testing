@@ -10,5 +10,5 @@ add_executable( vision main.cpp )
 set(BUILD_SHARED_LIBS OFF)
 set(BUILD_PYTHON_WRAPPER OFF)
 
-add_subdirectory(apriltag)
+add_subdirectory(apriltag EXCLUDE_FROM_ALL)
 target_link_libraries( vision apriltag ${OpenCV_LIBS} )
