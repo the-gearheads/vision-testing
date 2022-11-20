@@ -14,6 +14,8 @@ extern "C" {
 #define HWENC_PIPELINE "appsrc ! videoconvert ! v4l2h264enc extra-controls='controls,h264_profile=0,video_bitrate_mode=0,video_bitrate=3000000,h264_i_frame_period=1' ! 'video/x-h264, level=(string)5' ! h264parse ! " UDPSINK_PIPELINE
 #define SOFTWARE_PIPELINE "appsrc ! videoconvert ! x264enc tune=zerolatency bitrate=1000 ! video/x-h264, level=(string)5 ! h264parse ! " UDPSINK_PIPELINE
 
+#define FONT FONT_HERSHEY_PLAIN
+
 using namespace cv;
 int main(int argc, char** argv )
 {
@@ -51,8 +53,8 @@ int main(int argc, char** argv )
 
     Mat img, greyImg;
     TickMeter meter;
-    meter.start();
     while(true) {
+        meter.start();
         cap >> img;
         cvtColor(img, greyImg, COLOR_BGR2GRAY);
         waitKey(1);
@@ -87,19 +89,27 @@ int main(int argc, char** argv )
             std::stringstream ss;
             ss << det->id;
             String text = ss.str();
-            int fontface = FONT_HERSHEY_SCRIPT_SIMPLEX;
             double fontscale = 1.0;
             int baseline;
-            Size textsize = getTextSize(text, fontface, fontscale, 2,
+            Size textsize = getTextSize(text, FONT, fontscale, 2,
                                             &baseline);
             putText(img, text, Point(det->c[0]-textsize.width/2,
                                        det->c[1]+textsize.height/2),
-                    fontface, fontscale, Scalar(0xff, 0x99, 0), 2);
+                    FONT, fontscale, Scalar(0xff, 0x99, 0), 2);
         }
+
+        /* FPS Meter Rendering*/
+        int fontSize = 2;
+        int baseline;
+        std::string fps = std::to_string(meter.getFPS()) + " FPS";
+        Size ts = getTextSize(fps, FONT, fontSize, 2, &baseline);
+        /* Offset it 100px down */
+        ts.height += 100;
+        putText(img, fps, ts, FONT, fontSize, Scalar(255, 255, 255), 2);
 
         writer.write(img);
         apriltag_detections_destroy(detections);
-
+        meter.stop();
     }
 
     apriltag_detector_destroy(detector);
