@@ -3,4 +3,11 @@ project( vision )
 find_package( OpenCV REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 add_executable( vision main.cpp )
-target_link_libraries( vision ${OpenCV_LIBS} )
+
+# Kinda hacky but it works -enough- 
+
+set(BUILD_SHARED_LIBS OFF)
+set(BUILD_PYTHON_WRAPPER OFF)
+
+add_subdirectory(apriltag)
+target_link_libraries( vision apriltag ${OpenCV_LIBS} )
