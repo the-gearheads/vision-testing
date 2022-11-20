@@ -75,8 +75,8 @@ int main(int argc, char** argv )
     Mat img, greyImg;
     TickMeter meter;
     while(true) {
-        meter.start();
         cap >> img;
+        meter.start();
         cvtColor(img, greyImg, COLOR_BGR2GRAY);
         waitKey(1);
 
