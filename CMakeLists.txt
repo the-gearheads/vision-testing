@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 project( vision )
 find_package( OpenCV REQUIRED )
+add_compile_options(-O3)
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 add_executable( vision main.cpp )
 

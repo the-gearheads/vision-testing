@@ -55,8 +55,8 @@ int main(int argc, char** argv )
         pipeline << SOFTWARE_PIPELINE;
     }
 
-    pipeline << "host=" << config.value("udphost", "255.255.255.255") << " ";
-    pipeline << "port=" << config.value("udpport", 5010);
+    pipeline << " host=" << config.value("udphost", "255.255.255.255");
+    pipeline << " port=" << config.value("udpport", 5010);
     VideoWriter writer = VideoWriter(pipeline.str(), VideoWriter::fourcc('M', 'J', 'P', 'G'), fps, Size(width, height));
 
     /* Apriltag init */
