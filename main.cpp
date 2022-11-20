@@ -1,15 +1,18 @@
 #include <stdio.h>
 #include <iostream>
+#include <fstream>
 #include <opencv2/opencv.hpp>
 #include <thread>
 #include "json.hpp"
+using json = nlohmann::json;
 
 extern "C" {
 #include "apriltag.h"
 #include "tag16h5.h"
 }
 
-#define UDPSINK_PIPELINE "rtph264pay config-interval=1 ! udpsink host=192.168.0.255 port=5010 sync=false"
+/* Port and host added later */
+#define UDPSINK_PIPELINE "rtph264pay config-interval=1 ! udpsink sync=false"
 
 #define HWENC_PIPELINE "appsrc ! videoconvert ! v4l2h264enc extra-controls='controls,h264_profile=0,video_bitrate_mode=0,video_bitrate=3000000,h264_i_frame_period=1' ! 'video/x-h264, level=(string)5' ! h264parse ! " UDPSINK_PIPELINE
 #define SOFTWARE_PIPELINE "appsrc ! videoconvert ! x264enc tune=zerolatency bitrate=1000 ! video/x-h264, level=(string)5 ! h264parse ! " UDPSINK_PIPELINE
@@ -19,11 +22,20 @@ extern "C" {
 using namespace cv;
 int main(int argc, char** argv )
 {
-    int cam_index = 0;
+    std::string config_path = "config.json";
     if(argc > 1) {
-        cam_index = strtol(argv[1], nullptr, 10);
+        config_path = argv[1];
     }
-    
+    /* Open config.json and verify it exists*/
+    std::ifstream f(config_path);
+    if(!f) {
+        printf("Failed to open %s. Does it exist?\n", config_path.c_str());
+        exit(-2);
+    }
+
+    json config = json::parse(f);
+
+    int cam_index = config.value("cam_id", 0); 
     VideoCapture cap = VideoCapture(cam_index, CAP_V4L2);
 
     if(!cap.isOpened()) {
@@ -36,7 +48,16 @@ int main(int argc, char** argv )
     int fps = cap.get(CAP_PROP_FPS);
     printf("%dx%d @ %dfps\n", width, height, fps);
 
-    VideoWriter writer = VideoWriter(SOFTWARE_PIPELINE, VideoWriter::fourcc('M', 'J', 'P', 'G'), fps, Size(width, height));
+    std::stringstream pipeline("");
+    if(config.value("pihwenc", false)) {
+        pipeline << HWENC_PIPELINE;
+    } else {
+        pipeline << SOFTWARE_PIPELINE;
+    }
+
+    pipeline << "host=" << config.value("udphost", "255.255.255.255") << " ";
+    pipeline << "port=" << config.value("udpport", 5010);
+    VideoWriter writer = VideoWriter(pipeline.str(), VideoWriter::fourcc('M', 'J', 'P', 'G'), fps, Size(width, height));
 
     /* Apriltag init */
     apriltag_family_t* tf = tag16h5_create();

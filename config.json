@@ -1,0 +1,6 @@
+{
+    "cam_id": 0,
+    "udphost": "192.168.0.255",
+    "udpport": 5010,
+    "pihwenc": false
+}
