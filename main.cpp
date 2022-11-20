@@ -2,6 +2,7 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <thread>
+#include "json.hpp"
 extern "C" {
 #include "apriltag.h"
 #include "tag16h5.h"
@@ -19,7 +20,14 @@ int main(int argc, char** argv )
     if(argc > 1) {
         cam_index = strtol(argv[1], nullptr, 10);
     }
+    
     VideoCapture cap = VideoCapture(cam_index, CAP_V4L2);
+
+    if(!cap.isOpened()) {
+        printf("Couldn't open camera %d\n", cam_index);
+        exit(-1);
+    }
+
     int width = cap.get(CAP_PROP_FRAME_WIDTH);
     int height = cap.get(CAP_PROP_FRAME_HEIGHT);
     int fps = cap.get(CAP_PROP_FPS);
