@@ -28,15 +28,18 @@ int main(int argc, char** argv )
     }
     /* Open config.json and verify it exists*/
     std::ifstream f(config_path);
+    json config;
     if(!f) {
         printf("Failed to open %s. Does it exist?\n", config_path.c_str());
-        exit(-2);
+        printf("Usage: %s [config file]\n", argv[0]);
+        printf("Continuing anyways with defaults...\n");
+        config = json::parse("{}");
+    } else {
+        config = json::parse(f, nullptr, true, true);
     }
 
-    json config = json::parse(f);
-
     int cam_index = config.value("cam_id", 0); 
-    VideoCapture cap = VideoCapture(cam_index, CAP_V4L2);
+    VideoCapture cap = VideoCapture(cam_index, CAP_ANY);
 
     if(!cap.isOpened()) {
         printf("Couldn't open camera %d\n", cam_index);
@@ -64,13 +67,16 @@ int main(int argc, char** argv )
     apriltag_detector_t* detector = apriltag_detector_create();
     apriltag_detector_add_family(detector, tf);
 
-    detector->quad_decimate = 2;
-    detector->quad_sigma = 0;
-    detector->nthreads = std::thread::hardware_concurrency();
+    detector->quad_decimate = config.value("apriltag_quad_decimate", 2);
+    detector->quad_sigma = config.value("apriltag_blur", 0);
+
+    detector->nthreads = config.value("apriltag_threads", 0);
+    if(!detector->nthreads) detector->nthreads = std::thread::hardware_concurrency();
     if(!detector->nthreads) detector->nthreads = 1;
     printf("Using %d threads\n", detector->nthreads);
-    detector->debug = 0;
-    detector->refine_edges = 1;
+
+    detector->debug = config.value("apriltag_debug", false);
+    detector->refine_edges = config.value("apriltag_refine_edges", true);
 
     Mat img, greyImg;
     TickMeter meter;

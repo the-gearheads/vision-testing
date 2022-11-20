@@ -1,6 +1,20 @@
 {
+    // Camera id, 0 should correspond to /dev/video0 and so on
     "cam_id": 1,
-    "udphost": "192.168.0.255",
+    // Host to send UDP stream to
+    "udphost": "255.255.255.255",
     "udpport": 5010,
-    "pihwenc": false
+    // Whether to use V4L2 hardware encoding pipeline. Likely only works on Pi4.
+    "pihwenc": false,
+    
+    // How much to decimate input image by
+    "apriltag_quad_decimate": 2,
+    // Apply low-pass blur to input
+    "apriltag_blur": 0,
+    // How many threads to use, 0 will use all threads
+    "apriltag_threads": 0,
+    // libapriltag debug logging
+    "apriltag_debug": false,
+    // Spend more time aligning edges of tags
+    "apriltag_refine_edges": true
 }
