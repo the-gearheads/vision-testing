@@ -3,6 +3,7 @@
 #include <opencv2/opencv.hpp>
 #include <thread>
 #include "json.hpp"
+
 extern "C" {
 #include "apriltag.h"
 #include "tag16h5.h"
