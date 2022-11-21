@@ -38,13 +38,29 @@ int main(int argc, char** argv )
         config = json::parse(f, nullptr, true, true);
     }
 
-    int cam_index = config.value("cam_id", 0); 
-    VideoCapture cap = VideoCapture(cam_index, CAP_ANY);
+    int cam_index = config.value("cam_id", 0);
+    VideoCapture cap;
+    if(config.value("cam_force_backend_v4l2", false)) {
+        cap = VideoCapture(cam_index, CAP_V4L2);
+    } else if (config.value("cam_force_backend_dshow", false)) {
+        cap = VideoCapture(cam_index, CAP_DSHOW);
+    } else if (config.value("cam_force_backend_gstreamer", false)) {
+        cap = VideoCapture(cam_index, CAP_GSTREAMER);
+    } else {
+        cap = VideoCapture(cam_index, CAP_ANY);
+    }
 
     if(!cap.isOpened()) {
         printf("Couldn't open camera %d\n", cam_index);
         exit(-1);
     }
+
+    if(config.value("cam_width", 0))
+        cap.set(CAP_PROP_FRAME_WIDTH, config.value("cam_width", 0));
+    if(config.value("cam_height", 0))
+        cap.set(CAP_PROP_FRAME_HEIGHT, config.value("cam_height", 0));
+    if(config.value("cam_fps", 0))
+        cap.set(CAP_PROP_FPS, config.value("cam_fps", 0));
 
     int width = cap.get(CAP_PROP_FRAME_WIDTH);
     int height = cap.get(CAP_PROP_FRAME_HEIGHT);
