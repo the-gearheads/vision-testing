@@ -11,6 +11,8 @@ extern "C" {
 #include "tag16h5.h"
 }
 
+#include "ntcore_cpp.h"
+
 using json = nlohmann::json;
 using namespace cv;
 
