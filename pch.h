@@ -1,4 +1,5 @@
 #pragma once
+#include "ntcore_cpp.h"
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
@@ -10,8 +11,6 @@ extern "C" {
 #include "apriltag.h"
 #include "tag16h5.h"
 }
-
-#include "ntcore_cpp.h"
 
 using json = nlohmann::json;
 using namespace cv;

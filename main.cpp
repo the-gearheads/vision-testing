@@ -8,18 +8,19 @@
 
 void start_nt(json config, NT_Inst ntInst) {
     int nt_port = config.value("networktables_port", 1735);
+    if(!nt_port) nt_port = 1735;
 
     if(!config.value("networktables_ip", "").empty()) {
-        nt::StartClient(ntInst, config.value("networktables_ip", "10.11.89.2").c_str(), nt_port);
+        nt::StartClient(ntInst, config.value("networktables_ip", "").c_str(), nt_port);
         return;
     }
 
-    if(!config.value("team_number", 0)) {
+    if(config.value("team_number", 0)) {
         nt::StartClientTeam(ntInst, config.value("team_number", 0), nt_port);
         return;
     }
 
-    nt::StartServer(ntInst, "./persist.networktables", "0.0.0.0", nt_port);
+    nt::StartServer(ntInst, "./persistent.ini", "0.0.0.0", nt_port);
 }
 
 int main(int argc, char** argv )
@@ -81,7 +82,7 @@ int main(int argc, char** argv )
     VideoWriter writer = VideoWriter(pipeline.str(), VideoWriter::fourcc('M', 'J', 'P', 'G'), fps, Size(width, height));
 
     /* Initialize NetworkTables */
-    NT_Inst ntInst = nt::CreateInstance();
+    NT_Inst ntInst = nt::GetDefaultInstance();
     start_nt(config, ntInst);
     nt::SetNetworkIdentity(ntInst, "vision");
 

@@ -18,7 +18,7 @@
     // 0 defaults to 1735, the default networktables port
     "networktables_port": 0,
     // IP to connect to, this overrides the team_number
-    "networktables_ip": "0.0.0.0",
+    "networktables_ip": "",
     // Team number, used for connecting to networktables. If neither this or ip are specified, the NT server will start.
     "team_number": 0,
     
@@ -27,7 +27,7 @@
     // Apply low-pass blur to input
     "apriltag_blur": 0,
     // How many threads to use, 0 will use all threads
-    "apriltag_threads": 0,
+    "apriltag_threads": 4,
     // libapriltag debug logging
     "apriltag_debug": false,
     // Spend more time aligning edges of tags

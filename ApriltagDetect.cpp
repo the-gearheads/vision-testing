@@ -39,6 +39,10 @@ void ApriltagDetect::execute(Mat img)
   // Draw detection outlines
   for (int i = 0; i < zarray_size(detections); i++)
   {
+
+    /* VERY TEMPORARY, PLEASE REMOVE WHEN NOT NEEDED */
+    nt::DeleteAllEntries(ntInst);
+
     apriltag_detection_t* det;
     zarray_get(detections, i, &det);
     line(img, Point(det->p[0][0], det->p[0][1]), Point(det->p[1][0], det->p[1][1]), Scalar(0, 0xff, 0), 2);
@@ -49,6 +53,18 @@ void ApriltagDetect::execute(Mat img)
     std::stringstream ss;
     ss << det->id;
     String text = ss.str();
+
+    String rootPath = (std::stringstream() << "/Vision/Detection (" << text << ")/").str();
+    NT_Entry e;
+    e = nt::GetEntry(ntInst, rootPath + "Corner 0");
+    nt::SetEntryTypeValue(e, nt::Value::MakeDoubleArray({det->p[0][0],det->p[0][1]}));
+    e = nt::GetEntry(ntInst, rootPath + "Corner 1");
+    nt::SetEntryTypeValue(e, nt::Value::MakeDoubleArray({det->p[1][0],det->p[1][1]}));
+    e = nt::GetEntry(ntInst, rootPath + "Corner 2");
+    nt::SetEntryTypeValue(e, nt::Value::MakeDoubleArray({det->p[2][0],det->p[2][1]}));
+    e = nt::GetEntry(ntInst, rootPath + "Corner 3");
+    nt::SetEntryTypeValue(e, nt::Value::MakeDoubleArray({det->p[3][0],det->p[3][1]}));
+
     double fontscale = 1.0;
     int baseline;
     Size textsize = getTextSize(text, FONT, fontscale, 2, &baseline);
