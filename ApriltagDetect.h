@@ -2,7 +2,7 @@
 
 class ApriltagDetect {
   public:
-  ApriltagDetect(json config);
+  ApriltagDetect(json config, NT_Inst ntInst);
   ~ApriltagDetect();
   /* Do detections, draw on the frame*/
   void execute(Mat img);
@@ -13,4 +13,5 @@ class ApriltagDetect {
   json config;
   apriltag_family_t* tag_family;
   apriltag_detector_t* detector;
+  NT_Inst ntInst;
 };

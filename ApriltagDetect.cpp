@@ -1,9 +1,10 @@
 #include "ApriltagDetect.h"
 
-ApriltagDetect::ApriltagDetect(json config)
+ApriltagDetect::ApriltagDetect(json config, NT_Inst ntInst)
 {
   this->tag_family = tag16h5_create();
   this->detector = apriltag_detector_create();
+  this->ntInst = ntInst;
   apriltag_detector_add_family(detector, tag_family);
 
   detector->quad_decimate = config.value("apriltag_quad_decimate", 2);
