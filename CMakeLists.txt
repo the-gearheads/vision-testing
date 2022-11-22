@@ -17,7 +17,7 @@ ELSE()
 ENDIF()
 
 include_directories( ${OpenCV_INCLUDE_DIRS} )
-add_executable( vision main.cpp )
+add_executable( vision main.cpp ApriltagDetect.cpp )
 
 # Kinda hacky but it works -enough- 
 
@@ -26,3 +26,4 @@ set(BUILD_PYTHON_WRAPPER OFF)
 
 add_subdirectory(apriltag EXCLUDE_FROM_ALL)
 target_link_libraries( vision apriltag ${OpenCV_LIBS} )
+target_precompile_headers(vision PRIVATE pch.h)
