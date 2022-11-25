@@ -64,6 +64,10 @@ int main(int argc, char** argv )
         cap.set(CAP_PROP_FRAME_HEIGHT, config.value("cam_height", 0));
     if(config.value("cam_fps", 0))
         cap.set(CAP_PROP_FPS, config.value("cam_fps", 0));
+    if(config.value("force_mjpg", false))
+        cap.set(CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
+    if(config.value("force_yuyv", false))
+        cap.set(CAP_PROP_FOURCC, cv::VideoWriter::fourcc('Y', 'U', 'Y', 'V'));
 
     int width = cap.get(CAP_PROP_FRAME_WIDTH);
     int height = cap.get(CAP_PROP_FRAME_HEIGHT);

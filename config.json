@@ -4,6 +4,8 @@
     "cam_width": 640,
     "cam_height": 480,
     "cam_fps": 30,
+    "force_mjpg": false,
+    "force_yuyv": false,
 
     "cam_force_backend_v4l2": true,
     "cam_force_backend_dshow": false,
