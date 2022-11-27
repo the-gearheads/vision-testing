@@ -1,4 +1,5 @@
 #include "ApriltagDetect.h"
+#include "Config.h"
 
 ApriltagDetect::ApriltagDetect(json config, NT_Inst ntInst)
 {
@@ -7,15 +8,11 @@ ApriltagDetect::ApriltagDetect(json config, NT_Inst ntInst)
   this->ntInst = ntInst;
   apriltag_detector_add_family(detector, tag_family);
 
-  detector->quad_decimate = config.value("apriltag_quad_decimate", 2);
-  detector->quad_sigma = config.value("apriltag_blur", 0);
-  detector->nthreads = config.value("apriltag_threads", 0);
-  detector->debug = config.value("apriltag_debug", false);
-  detector->refine_edges = config.value("apriltag_refine_edges", true);
-  if (!detector->nthreads)
-    detector->nthreads = std::thread::hardware_concurrency();
-  if (!detector->nthreads)
-    detector->nthreads = 1;
+  detector->quad_decimate = Config::atag->quad_decimate;
+  detector->quad_sigma = Config::atag->blur;
+  detector->nthreads = Config::atag->threads;
+  detector->debug = Config::atag->debug;
+  detector->refine_edges = Config::atag->refine_edges;
   printf("Using %d threads\n", detector->nthreads);
 }
 
@@ -54,7 +51,7 @@ void ApriltagDetect::execute(Mat img)
     ss << det->id;
     String text = ss.str();
 
-    String rootPath = (std::stringstream() << "/Vision/Detection (" << text << ")/").str();
+    String rootPath = (std::stringstream() << Config::nt->rootPrefix << "/Detection (" << text << ")/").str();
     NT_Entry e;
     e = nt::GetEntry(ntInst, rootPath + "Corner 0");
     nt::SetEntryTypeValue(e, nt::Value::MakeDoubleArray({det->p[0][0],det->p[0][1]}));

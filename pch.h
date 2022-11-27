@@ -1,6 +1,7 @@
 #pragma once
 #include "ntcore_cpp.h"
 #include <stdio.h>
+#include <stdint.h>
 #include <iostream>
 #include <fstream>
 #include <opencv2/opencv.hpp>

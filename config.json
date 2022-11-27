@@ -4,25 +4,25 @@
     "cam_width": 640,
     "cam_height": 480,
     "cam_fps": 30,
-    "force_mjpg": false,
-    "force_yuyv": false,
-
-    "cam_force_backend_v4l2": true,
-    "cam_force_backend_dshow": false,
-    "cam_force_backend_gstreamer": false,
+    // Fource a video mode, such as MJPG or YUYV
+    "force_fourcc": "MJPG",
+    // Valid options are any, gstreamer, dshow, and v4l2
+    "force_backend": "any",
 
     // Host to send UDP stream to
-    "udphost": "255.255.255.255",
-    "udpport": 5010,
+    "cam_broadcast_ip": "255.255.255.255",
+    "cam_broadcast_port": 5010,
     // Whether to use V4L2 hardware encoding pipeline. Likely only works on Pi4.
     "pihwenc": false,
 
-    // 0 defaults to 1735, the default networktables port
-    "networktables_port": 0,
-    // IP to connect to, this overrides the team_number
-    "networktables_ip": "",
-    // Team number, used for connecting to networktables. If neither this or ip are specified, the NT server will start.
-    "team_number": 0,
+    // Whether to host a networktables server or not
+    "nt_server": true,
+    // Port to connect or bind to
+    "nt_port": 1735,
+    // IP to connect to or team number (as a string)
+    "nt_client_ip_or_teamnum": "",
+    // Root NT path for data
+    "nt_prefix": "/Vision",
     
     // How much to decimate input image by
     "apriltag_quad_decimate": 2,

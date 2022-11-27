@@ -1,4 +1,5 @@
 #include "ApriltagDetect.h"
+#include "Config.h"
 
 /* Port and host added later */
 #define UDPSINK_PIPELINE "rtph264pay config-interval=1 ! udpsink sync=false"
@@ -6,21 +7,18 @@
 #define HWENC_PIPELINE "appsrc ! videoconvert ! v4l2h264enc extra-controls='controls,h264_profile=0,video_bitrate_mode=0,video_bitrate=3000000,h264_i_frame_period=1' ! 'video/x-h264, level=(string)5' ! h264parse ! " UDPSINK_PIPELINE
 #define SOFTWARE_PIPELINE "appsrc ! videoconvert ! x264enc tune=zerolatency bitrate=1000 ! video/x-h264, level=(string)5 ! h264parse ! " UDPSINK_PIPELINE
 
-void start_nt(json config, NT_Inst ntInst) {
-    int nt_port = config.value("networktables_port", 1735);
-    if(!nt_port) nt_port = 1735;
-
-    if(!config.value("networktables_ip", "").empty()) {
-        nt::StartClient(ntInst, config.value("networktables_ip", "").c_str(), nt_port);
-        return;
-    }
-
-    if(config.value("team_number", 0)) {
-        nt::StartClientTeam(ntInst, config.value("team_number", 0), nt_port);
-        return;
-    }
-
-    nt::StartServer(ntInst, "./persistent.ini", "0.0.0.0", nt_port);
+void start_nt(NT_Inst ntInst) {
+   switch (Config::nt->mode) {
+        case CLIENT:
+            nt::StartClient(ntInst, Config::nt->ip.c_str(), Config::nt->port);
+            break;
+        case CLIENT_TEAM:
+            nt::StartClientTeam(ntInst, Config::nt->team_number, Config::nt->port);
+            break;
+        case SERVER:
+            nt::StartServer(ntInst, "./persistent.ini", Config::nt->ip.c_str(), Config::nt->port);
+            break;
+   }
 }
 
 int main(int argc, char** argv )
@@ -29,6 +27,7 @@ int main(int argc, char** argv )
     if(argc > 1) {
         config_path = argv[1];
     }
+
     /* Open config.json and verify it exists*/
     std::ifstream f(config_path);
     json config;
@@ -41,33 +40,23 @@ int main(int argc, char** argv )
         config = json::parse(f, nullptr, true, true);
     }
 
-    int cam_index = config.value("cam_id", 0);
-    VideoCapture cap;
-    if(config.value("cam_force_backend_v4l2", false)) {
-        cap = VideoCapture(cam_index, CAP_V4L2);
-    } else if (config.value("cam_force_backend_dshow", false)) {
-        cap = VideoCapture(cam_index, CAP_DSHOW);
-    } else if (config.value("cam_force_backend_gstreamer", false)) {
-        cap = VideoCapture(cam_index, CAP_GSTREAMER);
-    } else {
-        cap = VideoCapture(cam_index, CAP_ANY);
-    }
+    Config::init(config);
+
+    VideoCapture cap = VideoCapture(Config::cam->id, Config::cam->backend);
 
     if(!cap.isOpened()) {
-        printf("Couldn't open camera %d\n", cam_index);
+        printf("Couldn't open camera %d\n", Config::cam->id);
         exit(-1);
     }
 
-    if(config.value("cam_width", 0))
-        cap.set(CAP_PROP_FRAME_WIDTH, config.value("cam_width", 0));
-    if(config.value("cam_height", 0))
-        cap.set(CAP_PROP_FRAME_HEIGHT, config.value("cam_height", 0));
-    if(config.value("cam_fps", 0))
-        cap.set(CAP_PROP_FPS, config.value("cam_fps", 0));
-    if(config.value("force_mjpg", false))
-        cap.set(CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
-    if(config.value("force_yuyv", false))
-        cap.set(CAP_PROP_FOURCC, cv::VideoWriter::fourcc('Y', 'U', 'Y', 'V'));
+    if(Config::cam->width)
+        cap.set(CAP_PROP_FRAME_WIDTH, Config::cam->width);
+    if(Config::cam->height)
+        cap.set(CAP_PROP_FRAME_HEIGHT, Config::cam->height);
+    if(Config::cam->fps)
+        cap.set(CAP_PROP_FPS, Config::cam->fps);
+    if(Config::cam->force_fourcc)
+        cap.set(CAP_PROP_FOURCC, Config::cam->force_fourcc);
 
     int width = cap.get(CAP_PROP_FRAME_WIDTH);
     int height = cap.get(CAP_PROP_FRAME_HEIGHT);
@@ -75,19 +64,19 @@ int main(int argc, char** argv )
     printf("%dx%d @ %dfps\n", width, height, fps);
 
     std::stringstream pipeline("");
-    if(config.value("pihwenc", false)) {
+    if(Config::cam->use_hwenc) {
         pipeline << HWENC_PIPELINE;
     } else {
         pipeline << SOFTWARE_PIPELINE;
     }
 
-    pipeline << " host=" << config.value("udphost", "255.255.255.255");
-    pipeline << " port=" << config.value("udpport", 5010);
+    pipeline << " host=" << Config::cam->ip;
+    pipeline << " port=" << Config::cam->port;
     VideoWriter writer = VideoWriter(pipeline.str(), VideoWriter::fourcc('M', 'J', 'P', 'G'), fps, Size(width, height));
 
     /* Initialize NetworkTables */
     NT_Inst ntInst = nt::GetDefaultInstance();
-    start_nt(config, ntInst);
+    start_nt(ntInst);
     nt::SetNetworkIdentity(ntInst, "vision");
 
     ApriltagDetect detector(config, ntInst);
