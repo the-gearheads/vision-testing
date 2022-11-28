@@ -1,4 +1,5 @@
 #include "ApriltagDetect.h"
+#include "CalibrateMode.h"
 #include "Config.h"
 
 /* Port and host added later */
@@ -20,6 +21,8 @@ void start_nt(NT_Inst ntInst) {
             break;
    }
 }
+
+enum Mode { APRILTAG, CALIBRATION };
 
 int main(int argc, char** argv )
 {
@@ -79,7 +82,11 @@ int main(int argc, char** argv )
     start_nt(ntInst);
     nt::SetNetworkIdentity(ntInst, "vision");
 
-    ApriltagDetect detector(config, ntInst);
+    ApriltagDetect detector(ntInst);
+    CalibrateMode calibrate(ntInst);
+    Mode currentMode = APRILTAG;
+    NT_Entry currentModeEntry = nt::GetEntry(ntInst, Config::nt->rootPrefix + "/mode");
+    NT_Entry statusEntry = nt::GetEntry(ntInst, Config::nt->rootPrefix + "/status");
     Mat img;
     TickMeter meter;
     while(true) {
@@ -87,7 +94,35 @@ int main(int argc, char** argv )
         meter.start();
         waitKey(1);
 
-        detector.execute(img);
+        /* NT-based mode switching logic */
+        double newModeDouble;
+        if(NT_GetEntryDouble(currentModeEntry, nullptr, &newModeDouble)) {
+            Mode newMode = (Mode)(unsigned int)newModeDouble;
+            /* If new mode is different and valid... */
+            if (newMode != currentMode && ((newMode == APRILTAG) || (newMode == CALIBRATION))) {
+                /* Reset the currnet mode before switching to the other mode*/
+                switch (currentMode) {
+                    case CALIBRATION:
+                        calibrate.reset();
+                    case APRILTAG:
+                        detector.reset();
+                }
+
+                currentMode = newMode;
+            } else {
+                /* Inform the user that the mode is invalid if it is*/
+                nt::SetEntryValue(statusEntry, nt::Value::MakeString("Invalid mode"));
+            }
+        }
+
+        switch (currentMode) {
+            case APRILTAG:
+                detector.execute(img);
+                break;
+            case CALIBRATION:
+                calibrate.execute(img);
+                break;
+        }
 
         /* FPS Meter Rendering*/
         int fontSize = 2;

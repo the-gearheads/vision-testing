@@ -18,7 +18,7 @@ ENDIF()
 
 set(NtCore_INCLUDE_DIRS nt-vendor/ntcore/src/main/native/include nt-vendor/wpiutil/src/main/native/include)
 include_directories( ${OpenCV_INCLUDE_DIRS} )
-add_executable( vision main.cpp ApriltagDetect.cpp Config.cpp )
+add_executable( vision main.cpp ApriltagDetect.cpp CalibrateMode.cpp Config.cpp )
 
 # Kinda hacky but it works -enough- 
 

@@ -1,7 +1,7 @@
 #include "ApriltagDetect.h"
 #include "Config.h"
 
-ApriltagDetect::ApriltagDetect(json config, NT_Inst ntInst)
+ApriltagDetect::ApriltagDetect(NT_Inst ntInst)
 {
   this->tag_family = tag16h5_create();
   this->detector = apriltag_detector_create();
