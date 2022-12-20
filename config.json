@@ -4,6 +4,12 @@
     "cam_width": 640,
     "cam_height": 480,
     "cam_fps": 30,
+
+    "cam_intrinsics_fx": 10,
+    "cam_intrinsics_fy": 10,
+    "cam_intrinsics_cx": 200,
+    "cam_intrinsics_cy": 200,
+
     // Fource a video mode, such as MJPG or YUYV
     "force_fourcc": "MJPG",
     // Valid options are any, gstreamer, dshow, and v4l2

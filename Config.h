@@ -39,6 +39,10 @@ class CameraSettings {
     std::string ip;
     unsigned int port;
     CameraBackend backend;
+    double fx;
+    double fy;
+    double cx;
+    double cy;
 };
 
 class Config {

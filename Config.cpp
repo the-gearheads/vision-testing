@@ -24,6 +24,10 @@ void Config::config_cam(json config) {
     cam->use_hwenc = config.value("pihwenc", false);
     cam->ip = config.value("cam_broadcast_ip", "255.255.255.255");
     cam->port = config.value("cam_broadcast_port", 5010);
+    cam->fx = config.value("cam_intrinsics_fx", 0);
+    cam->fy = config.value("cam_intrinsics_fy", 0);
+    cam->cx = config.value("cam_intrinsics_cx", 0);
+    cam->cy = config.value("cam_intrinsics_cy", 0);
 
     std::string fourcc = config.value("cam_fourcc", "");
     if (fourcc.length() == 4) {

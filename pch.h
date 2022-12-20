@@ -10,6 +10,7 @@
 
 extern "C" {
 #include "apriltag.h"
+#include "apriltag_pose.h"
 #include "tag16h5.h"
 }
 
