@@ -10,6 +10,7 @@ class ApriltagDetect {
   void reconfigure_detector();
 
   private:
+  unsigned int heartbeat = 0;
   json config;
   apriltag_family_t* tag_family;
   apriltag_detector_t* detector;
@@ -17,7 +18,6 @@ class ApriltagDetect {
 
   double estimate_tag_pose(apriltag_detection_info_t* info, apriltag_pose_t* pose, double* err1, double* err2);
   double calc_tag_area(apriltag_detection_t* detection);
-  std::vector<uint8_t> longToBytes(long long d);
-  std::vector<uint8_t> intToBytes(int32_t i);
-  template <class T1, class T2> void ContainerInsert(T1& t1, const T2& t2);
+  void encodeDouble(double src, std::vector<uint8_t>& packetData);
+  void encodeInt(int src, std::vector<uint8_t>& packetData);
 };

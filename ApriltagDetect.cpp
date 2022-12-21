@@ -1,11 +1,11 @@
 #include "ApriltagDetect.h"
 #include "Config.h"
-
-#define ADD_DOUBLE(x) ContainerInsert(packet, longToBytes(x));
-#define ADD_INT(x) ContainerInsert(packet, intToBytes(x));
+#include <cstdlib>
+#include <ctime>
 
 ApriltagDetect::ApriltagDetect(json config, NT_Inst ntInst)
 {
+  srand((unsigned)time(0)); 
   this->tag_family = tag16h5_create();
   this->detector = apriltag_detector_create();
   this->ntInst = ntInst;
@@ -30,7 +30,7 @@ void ApriltagDetect::execute(Mat img)
 
   std::vector<uint8_t> packet = {};
   // Latency: double
-  ADD_DOUBLE(0);
+  encodeDouble((rand()/RAND_MAX)*50, packet);
   Mat greyImg;
   cvtColor(img, greyImg, COLOR_BGR2GRAY);
 
@@ -49,6 +49,7 @@ void ApriltagDetect::execute(Mat img)
     apriltag_detection_t* det;
     zarray_get(detections, i, &det);
 
+
     // Extract the yaw angle (rotation around the Z axis)
     double yaw = atan2(det->H->data[1], det->H->data[0]);
 
@@ -58,15 +59,17 @@ void ApriltagDetect::execute(Mat img)
     // Extract the skew angle
     double skew = atan2(det->H->data[6], det->H->data[10]);
 
-    ADD_DOUBLE(yaw)
-    ADD_DOUBLE(pitch)
-    ADD_DOUBLE(calc_tag_area(det))
-    ADD_DOUBLE(skew)
+    encodeDouble(yaw, packet);
+    encodeDouble(pitch, packet);
+    encodeDouble(calc_tag_area(det), packet);
+    encodeDouble(skew, packet);
 
-    ADD_INT(det->id)
+    printf("tag no %d id: %d\n", i, det->id);
+    encodeInt(det->id, packet);
 
     apriltag_detection_info_t info;
     info.det = det;
+    info.tagsize = (6.0 * 0.0254);
     info.fx = Config::cam->fx;
     info.fy = Config::cam->fy;
     info.cx = Config::cam->cx;
@@ -90,34 +93,36 @@ void ApriltagDetect::execute(Mat img)
     // left undisturbed
     for(int i = 0; i < 2; i++) {
       // x translation amount
-      ADD_DOUBLE(pose.t->data[0])
+      encodeDouble(pose.t->data[0], packet);
       // y translation amount
-      ADD_DOUBLE(pose.t->data[1])
+      encodeDouble(pose.t->data[1], packet);
       // z translation
-      ADD_DOUBLE(pose.t->data[2])
+      encodeDouble(pose.t->data[2], packet);
 
-      ADD_DOUBLE(qw)
-      ADD_DOUBLE(qx)
-      ADD_DOUBLE(qy)
-      ADD_DOUBLE(qz)
+      encodeDouble(qw, packet);
+      encodeDouble(qx, packet);
+      encodeDouble(qy, packet);
+      encodeDouble(qz, packet);
     }
 
     // Calculate pose ambiguity
     {
       double min = std::min(err1, err2);
       double max = std::max(err1, err2);
+      min = 400.999;
+      max = 400.999;
 
       if (max > 0) {
-        ADD_DOUBLE(min / max)
+        encodeDouble(min / max, packet);
       } else {
-        ADD_DOUBLE(-1)
+        encodeDouble(-1, packet);
       }
     };
 
     // Send tag corners
     for(int i = 0; i <= 3; i++) {
-      ADD_DOUBLE(det->p[i][0])
-      ADD_DOUBLE(det->p[i][1])
+      encodeDouble(det->p[i][0], packet);
+      encodeDouble(det->p[i][1], packet);
     }
 
 
@@ -140,7 +145,12 @@ void ApriltagDetect::execute(Mat img)
     };
 
   }
-  printf("%d", packet.size());
+
+  heartbeat++;
+  std::basic_string_view sv(reinterpret_cast<char*>(packet.data()), packet.size());
+  nt::SetEntryTypeValue(nt::GetEntry(this->ntInst, Config::nt->fullPath+"/rawBytes"), nt::Value::MakeRaw(sv));
+  nt::SetEntryTypeValue(nt::GetEntry(this->ntInst, Config::nt->fullPath+"/heartbeat"), nt::Value::MakeDouble(heartbeat));
+  nt::SetEntryTypeValue(nt::GetEntry(this->ntInst, Config::nt->rootPrefix+"/version"), nt::Value::MakeString(Config::nt->reportPhotonVersion));
   apriltag_detections_destroy(detections);
 }
 
@@ -180,30 +190,22 @@ double ApriltagDetect::calc_tag_area(apriltag_detection_t* detection) {
   return area;
 }
 
-template <class T1, class T2>
-void ApriltagDetect::ContainerInsert(T1& t1, const T2& t2)
-{
-    t1.insert(t1.end(), t2.begin(), t2.end());
+void ApriltagDetect::encodeDouble(double src, std::vector<uint8_t>& packetData) {
+    uint64_t data = *reinterpret_cast<uint64_t*>(&src);
+    packetData.push_back(static_cast<uint8_t>((data >> 56) & 0xff));
+    packetData.push_back(static_cast<uint8_t>((data >> 48) & 0xff));
+    packetData.push_back(static_cast<uint8_t>((data >> 40) & 0xff));
+    packetData.push_back(static_cast<uint8_t>((data >> 32) & 0xff));
+    packetData.push_back(static_cast<uint8_t>((data >> 24) & 0xff));
+    packetData.push_back(static_cast<uint8_t>((data >> 16) & 0xff));
+    packetData.push_back(static_cast<uint8_t>((data >> 8) & 0xff));
+    packetData.push_back(static_cast<uint8_t>(data & 0xff));
 }
 
-std::vector<uint8_t> ApriltagDetect::longToBytes(long long d) {
-  std::vector<uint8_t> result_vec = {};
-  result_vec.push_back((d & 0xFF00000000000000) >> 56);
-  result_vec.push_back((d & 0x00FF000000000000) >> 48);
-  result_vec.push_back((d & 0x0000FF0000000000) >> 40);
-  result_vec.push_back((d & 0x000000FF00000000) >> 32);
-  result_vec.push_back((d & 0x00000000FF000000) >> 24);
-  result_vec.push_back((d & 0x0000000000FF0000) >> 16);
-  result_vec.push_back((d & 0x000000000000FF00) >> 8);
-  result_vec.push_back((d & 0x00000000000000FF));
-  return result_vec;
-}
 
-std::vector<uint8_t> ApriltagDetect::intToBytes(int32_t i) {
-  std::vector<uint8_t> result_vec = {};
-  result_vec.push_back((i & 0xFF000000) >> 24);
-  result_vec.push_back((i & 0x00FF0000) >> 16);
-  result_vec.push_back((i & 0x0000FF00) >> 8);
-  result_vec.push_back((i & 0x000000FF));
-  return result_vec;
+void ApriltagDetect::encodeInt(int src, std::vector<uint8_t>& packetData) {
+    packetData.push_back(static_cast<uint8_t>(src >> 24));
+    packetData.push_back(static_cast<uint8_t>(src >> 16));
+    packetData.push_back(static_cast<uint8_t>(src >> 8));
+    packetData.push_back(static_cast<uint8_t>(src));
 }

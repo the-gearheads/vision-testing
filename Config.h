@@ -19,6 +19,9 @@ class NTSettings {
     int team_number;
     std::string ip;
     std::string rootPrefix;
+    std::string targetName;
+    std::string fullPath;
+    std::string reportPhotonVersion;
 };
 
 #define FOURCC(a,b,c,d) ( (uint32_t) (((d)<<24) | ((c)<<16) | ((b)<<8) | (a)) )

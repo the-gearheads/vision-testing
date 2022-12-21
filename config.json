@@ -28,7 +28,8 @@
     // IP to connect to or team number (as a string)
     "nt_client_ip_or_teamnum": "",
     // Root NT path for data
-    "nt_prefix": "/Vision",
+    "nt_prefix": "/photonvision",
+    "report_photon_version": "v2023.1.1-beta-3",
     
     // How much to decimate input image by
     "apriltag_quad_decimate": 2,
