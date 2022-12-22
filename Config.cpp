@@ -54,8 +54,8 @@ void Config::config_cam(json config) {
 }
 
 void Config::config_apriltag(json config) {
-    atag->blur = config.value("apriltag_blur", 0);
-    atag->quad_decimate = config.value("apriltag_quad_decimate", 2);
+    atag->blur = config.value("apriltag_blur", 2);
+    atag->quad_decimate = config.value("apriltag_quad_decimate", 4);
     atag->threads = config.value("apriltag_threads", 0);
     if(!atag->threads) { 
         atag->threads = std::thread::hardware_concurrency();

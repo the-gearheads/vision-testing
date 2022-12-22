@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <ctime>
 
-//#define ENCODING_DEBUG 0
+//#define ENCODING_DEBUG
 
 ApriltagDetect::ApriltagDetect(json config, NT_Inst ntInst)
 {
@@ -32,7 +32,7 @@ void ApriltagDetect::execute(Mat img)
 
   std::vector<uint8_t> packet = {};
   // Latency: double
-  encodeDouble((rand()/RAND_MAX)*50, packet);
+  encodeDouble(rand()*50, packet);
   Mat greyImg;
   cvtColor(img, greyImg, COLOR_BGR2GRAY);
 
@@ -50,6 +50,7 @@ void ApriltagDetect::execute(Mat img)
 
     apriltag_detection_t* det;
     zarray_get(detections, i, &det);
+    printf("tag no %d id: %d\n", i, det->id);
 
     // Extract the yaw angle (rotation around the Z axis)
     double yaw = atan2(det->H->data[1], det->H->data[0]);
@@ -65,7 +66,6 @@ void ApriltagDetect::execute(Mat img)
     encodeDouble(calc_tag_area(det), packet);
     encodeDouble(skew, packet);
 
-    printf("tag no %d id: %d\n", i, det->id);
     encodeInt(det->id, packet);
 
     apriltag_detection_info_t info;
@@ -90,7 +90,7 @@ void ApriltagDetect::execute(Mat img)
     // Add the target pose twice so that bestCamToTarget and altCamToTarget are the same, since estimate_tag_pose
     // Does some weird freeing stuff and I feel like it's probably there for a reason I don't understand so it's better
     // left undisturbed
-    for(int i = 0; i < 2; i++) {
+    for(int i = 0; i < 1; i++) {
       // x translation amount
       encodeDouble(pose.t->data[0], packet);
       // y translation amount
@@ -146,10 +146,12 @@ void ApriltagDetect::execute(Mat img)
   heartbeat++;
   std::basic_string_view sv(reinterpret_cast<char*>(packet.data()), packet.size());
   #ifdef ENCODING_DEBUG
+  if(zarray_size(detections) > 0) { 
   for(int i=0; i < packet.size(); i++) {
     printf("%02x ", packet.at(i));
   }
   printf("\n");
+  }
   #endif
   nt::SetEntryTypeValue(nt::GetEntry(this->ntInst, Config::nt->fullPath+"/rawBytes"), nt::Value::MakeRaw(sv));
   nt::SetEntryTypeValue(nt::GetEntry(this->ntInst, Config::nt->fullPath+"/heartbeat"), nt::Value::MakeDouble(heartbeat));
