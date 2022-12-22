@@ -20,4 +20,5 @@ class ApriltagDetect {
   double calc_tag_area(apriltag_detection_t* detection);
   void encodeDouble(double src, std::vector<uint8_t>& packetData);
   void encodeInt(int src, std::vector<uint8_t>& packetData);
+  void encodeByte(uint8_t src, std::vector<uint8_t>& packetData);
 };

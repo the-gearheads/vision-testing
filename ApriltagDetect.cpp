@@ -41,7 +41,7 @@ void ApriltagDetect::execute(Mat img)
 
   zarray_t* detections = apriltag_detector_detect(detector, &frame);
   // Detection count: uint8_t
-  encodeInt(zarray_size(detections), packet);
+  encodeByte(zarray_size(detections), packet);
 
   /* Do stuff with detections here */
   // Draw detection outlines
@@ -226,5 +226,12 @@ void ApriltagDetect::encodeInt(int src, std::vector<uint8_t>& packetData) {
       printf("%02x ", packetData.at(i));
     }
     printf("\n");
+    #endif
+}
+
+void ApriltagDetect::encodeByte(uint8_t src, std::vector<uint8_t>& packetData) {
+    packetData.push_back(static_cast<uint8_t>(src));
+    #ifdef ENCODING_DEBUG
+    printf("[byte] Encoding %d as %02x\n", src, src);
     #endif
 }
