@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <ctime>
 
+//#define ENCODING_DEBUG 0
+
 ApriltagDetect::ApriltagDetect(json config, NT_Inst ntInst)
 {
   srand((unsigned)time(0)); 
@@ -39,7 +41,7 @@ void ApriltagDetect::execute(Mat img)
 
   zarray_t* detections = apriltag_detector_detect(detector, &frame);
   // Detection count: uint8_t
-  packet.push_back(zarray_size(detections));
+  encodeInt(zarray_size(detections), packet);
 
   /* Do stuff with detections here */
   // Draw detection outlines
@@ -48,7 +50,6 @@ void ApriltagDetect::execute(Mat img)
 
     apriltag_detection_t* det;
     zarray_get(detections, i, &det);
-
 
     // Extract the yaw angle (rotation around the Z axis)
     double yaw = atan2(det->H->data[1], det->H->data[0]);
@@ -79,10 +80,8 @@ void ApriltagDetect::execute(Mat img)
     double err1, err2;
     double err = estimate_tag_pose(&info, &pose, &err1, &err2);
 
-    // I sure hope this works
-    // 1. This code is literally AI generated because i do not understand this math
-    // 2. i may be indexing the matrix wrong
-    // Anyways, it converts the pose rotation matrix to a quaternion
+    // I sure hope this works, this code is AI generated because i do not understand this math
+    // Anyways, it is supposed to convert the pose rotation matrix to a quaternion
     double qw = sqrt(1 + MATD_EL(pose.R, 0, 0) + MATD_EL(pose.R, 1, 1) + MATD_EL(pose.R, 2, 2)) / 2;
     double qx = (MATD_EL(pose.R, 2, 1) - MATD_EL(pose.R, 1, 2)) / (4 * qw);
     double qy = (MATD_EL(pose.R, 0, 2) - MATD_EL(pose.R, 2, 0)) / (4 * qw);
@@ -109,8 +108,6 @@ void ApriltagDetect::execute(Mat img)
     {
       double min = std::min(err1, err2);
       double max = std::max(err1, err2);
-      min = 400.999;
-      max = 400.999;
 
       if (max > 0) {
         encodeDouble(min / max, packet);
@@ -148,6 +145,12 @@ void ApriltagDetect::execute(Mat img)
 
   heartbeat++;
   std::basic_string_view sv(reinterpret_cast<char*>(packet.data()), packet.size());
+  #ifdef ENCODING_DEBUG
+  for(int i=0; i < packet.size(); i++) {
+    printf("%02x ", packet.at(i));
+  }
+  printf("\n");
+  #endif
   nt::SetEntryTypeValue(nt::GetEntry(this->ntInst, Config::nt->fullPath+"/rawBytes"), nt::Value::MakeRaw(sv));
   nt::SetEntryTypeValue(nt::GetEntry(this->ntInst, Config::nt->fullPath+"/heartbeat"), nt::Value::MakeDouble(heartbeat));
   nt::SetEntryTypeValue(nt::GetEntry(this->ntInst, Config::nt->rootPrefix+"/version"), nt::Value::MakeString(Config::nt->reportPhotonVersion));
@@ -200,6 +203,15 @@ void ApriltagDetect::encodeDouble(double src, std::vector<uint8_t>& packetData) 
     packetData.push_back(static_cast<uint8_t>((data >> 16) & 0xff));
     packetData.push_back(static_cast<uint8_t>((data >> 8) & 0xff));
     packetData.push_back(static_cast<uint8_t>(data & 0xff));
+
+    #ifdef ENCODING_DEBUG
+    printf("[double] Encoding %f as ", src);
+    for(int i=packetData.size()-8; i < packetData.size(); i++) {
+      printf("%02x ", packetData.at(i));
+    }
+    printf("\n");
+    #endif
+
 }
 
 
@@ -208,4 +220,11 @@ void ApriltagDetect::encodeInt(int src, std::vector<uint8_t>& packetData) {
     packetData.push_back(static_cast<uint8_t>(src >> 16));
     packetData.push_back(static_cast<uint8_t>(src >> 8));
     packetData.push_back(static_cast<uint8_t>(src));
+    #ifdef ENCODING_DEBUG
+    printf("[int] Encoding %d as ", src);
+    for(int i=packetData.size()-4; i < packetData.size(); i++) {
+      printf("%02x ", packetData.at(i));
+    }
+    printf("\n");
+    #endif
 }
