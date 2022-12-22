@@ -87,22 +87,17 @@ void ApriltagDetect::execute(Mat img)
     double qy = (MATD_EL(pose.R, 0, 2) - MATD_EL(pose.R, 2, 0)) / (4 * qw);
     double qz = (MATD_EL(pose.R, 1, 0) - MATD_EL(pose.R, 0, 1)) / (4 * qw);
 
-    // Add the target pose twice so that bestCamToTarget and altCamToTarget are the same, since estimate_tag_pose
-    // Does some weird freeing stuff and I feel like it's probably there for a reason I don't understand so it's better
-    // left undisturbed
-    for(int i = 0; i < 1; i++) {
-      // x translation amount
-      encodeDouble(pose.t->data[0], packet);
-      // y translation amount
-      encodeDouble(pose.t->data[1], packet);
-      // z translation
-      encodeDouble(pose.t->data[2], packet);
+    // x translation
+    encodeDouble(pose.t->data[0], packet);
+    // y translation
+    encodeDouble(pose.t->data[1], packet);
+    // z translation
+    encodeDouble(pose.t->data[2], packet);
 
-      encodeDouble(qw, packet);
-      encodeDouble(qx, packet);
-      encodeDouble(qy, packet);
-      encodeDouble(qz, packet);
-    }
+    encodeDouble(qw, packet);
+    encodeDouble(qx, packet);
+    encodeDouble(qy, packet);
+    encodeDouble(qz, packet);
 
     // Calculate pose ambiguity
     {
