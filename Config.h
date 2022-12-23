@@ -1,11 +1,14 @@
 #pragma once
 class ApriltagSettings {
     public:
-    int quad_decimate;
-    int blur;
+    float quad_decimate;
+    float blur;
     bool debug;
     bool refine_edges;
     int threads;
+    int hammingThreshold;
+    double areaThreshold;
+    float decisionMarginThreshold;
 };
 
 enum NTMode {
@@ -19,6 +22,9 @@ class NTSettings {
     int team_number;
     std::string ip;
     std::string rootPrefix;
+    std::string targetName;
+    std::string fullPath;
+    std::string reportPhotonVersion;
 };
 
 #define FOURCC(a,b,c,d) ( (uint32_t) (((d)<<24) | ((c)<<16) | ((b)<<8) | (a)) )
@@ -39,6 +45,10 @@ class CameraSettings {
     std::string ip;
     unsigned int port;
     CameraBackend backend;
+    double fx;
+    double fy;
+    double cx;
+    double cy;
 };
 
 class Config {

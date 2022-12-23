@@ -4,6 +4,12 @@
     "cam_width": 640,
     "cam_height": 480,
     "cam_fps": 30,
+
+    "cam_intrinsics_fx": 16,
+    "cam_intrinsics_fy": 9,
+    "cam_intrinsics_cx": 160,
+    "cam_intrinsics_cy": 90,
+
     // Fource a video mode, such as MJPG or YUYV
     "force_fourcc": "MJPG",
     // Valid options are any, gstreamer, dshow, and v4l2
@@ -16,22 +22,30 @@
     "pihwenc": false,
 
     // Whether to host a networktables server or not
-    "nt_server": true,
+    "nt_server": false,
     // Port to connect or bind to
     "nt_port": 1735,
     // IP to connect to or team number (as a string)
-    "nt_client_ip_or_teamnum": "",
+    "nt_client_ip_or_teamnum": "127.0.0.1",
     // Root NT path for data
-    "nt_prefix": "/Vision",
+    "nt_prefix": "/photonvision",
+    "report_photon_version": "v2023.1.1-beta-3",
     
     // How much to decimate input image by
-    "apriltag_quad_decimate": 2,
+    "apriltag_quad_decimate": 4,
     // Apply low-pass blur to input
-    "apriltag_blur": 0,
+    "apriltag_blur": 2,
     // How many threads to use, 0 will use all threads
     "apriltag_threads": 4,
     // libapriltag debug logging
     "apriltag_debug": false,
     // Spend more time aligning edges of tags
-    "apriltag_refine_edges": true
+    "apriltag_refine_edges": true,
+    // Reject tag detections with less than this amount of area
+    "area_threshold": 0,
+    // Reject tag detections with a hamming distance greater than this number. The tag detector supposedly cannot
+    // detect tags with more than 2 hamming errors.
+    "hamming_treshold": 1,
+    // Reject detections with a decision margin smaller than this number. Supposedly only good for correcting really small tags. 
+    "decision_margin_treshold": 0
 }
