@@ -40,5 +40,12 @@
     // libapriltag debug logging
     "apriltag_debug": false,
     // Spend more time aligning edges of tags
-    "apriltag_refine_edges": true
+    "apriltag_refine_edges": true,
+    // Reject tag detections with less than this amount of area
+    "area_threshold": 0,
+    // Reject tag detections with a hamming distance greater than this number. The tag detector supposedly cannot
+    // detect tags with more than 2 hamming errors.
+    "hamming_treshold": 1,
+    // Reject detections with a decision margin smaller than this number. Supposedly only good for correcting really small tags. 
+    "decision_margin_treshold": 0
 }

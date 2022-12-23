@@ -54,14 +54,16 @@ void Config::config_cam(json config) {
 }
 
 void Config::config_apriltag(json config) {
-    atag->blur = config.value("apriltag_blur", 2);
-    atag->quad_decimate = config.value("apriltag_quad_decimate", 4);
+    atag->blur = config.value("apriltag_blur", 2.0);
+    atag->quad_decimate = config.value("apriltag_quad_decimate", 4.0);
     atag->threads = config.value("apriltag_threads", 0);
     if(!atag->threads) { 
         atag->threads = std::thread::hardware_concurrency();
     }
     atag->refine_edges = config.value("apriltag_refine_edges", true);
     atag->debug = config.value("apriltag_debug", false);
+    atag->areaThreshold = config.value("area_threshold", 0.0);
+    atag->hammingThreshold = config.value("hamming_threshold", 1);
 }
 
 void Config::config_nt(json config) {

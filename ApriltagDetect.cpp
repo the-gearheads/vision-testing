@@ -51,9 +51,8 @@ void ApriltagDetect::execute(Mat img)
     apriltag_detection_t* det;
     zarray_get(detections, i, &det);
 
-    if(det->hamming > 1) { continue; }
-
-    printf("tag no %d id: %d\n", i, det->id);
+    if(det->hamming > Config::atag->hammingThreshold) { continue; }
+    if(det->decision_margin < Config::atag->decisionMarginThreshold) { continue; }
 
     // Extract the yaw angle (rotation around the Z axis)
     double yaw = atan2(det->H->data[1], det->H->data[0]);
@@ -64,9 +63,15 @@ void ApriltagDetect::execute(Mat img)
     // Extract the skew angle
     double skew = atan2(det->H->data[6], det->H->data[10]);
 
+    double area = calc_tag_area(det);
+
+    if(area < Config::atag->areaThreshold) { continue; }
+
+    printf("tag no %d id: %d\n", i, det->id);
+
     encodeDouble(yaw, packet);
     encodeDouble(pitch, packet);
-    encodeDouble(calc_tag_area(det), packet);
+    encodeDouble(area, packet);
     encodeDouble(skew, packet);
 
     encodeInt(det->id, packet);

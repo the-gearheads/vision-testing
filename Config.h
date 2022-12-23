@@ -1,11 +1,14 @@
 #pragma once
 class ApriltagSettings {
     public:
-    int quad_decimate;
-    int blur;
+    float quad_decimate;
+    float blur;
     bool debug;
     bool refine_edges;
     int threads;
+    int hammingThreshold;
+    double areaThreshold;
+    float decisionMarginThreshold;
 };
 
 enum NTMode {
