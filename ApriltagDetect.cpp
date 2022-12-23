@@ -50,6 +50,9 @@ void ApriltagDetect::execute(Mat img)
 
     apriltag_detection_t* det;
     zarray_get(detections, i, &det);
+
+    if(det->hamming > 1) { continue; }
+
     printf("tag no %d id: %d\n", i, det->id);
 
     // Extract the yaw angle (rotation around the Z axis)
