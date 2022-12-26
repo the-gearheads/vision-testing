@@ -1,9 +1,9 @@
 #include "ApriltagDetect.h"
+#include "PhotonCompat.h"
 #include "Config.h"
 #include <cstdlib>
 #include <ctime>
 
-//#define ENCODING_DEBUG
 
 ApriltagDetect::ApriltagDetect(json config, NT_Inst ntInst)
 {
@@ -27,57 +27,43 @@ ApriltagDetect::~ApriltagDetect()
   tag16h5_destroy(tag_family);
 }
 
-void ApriltagDetect::execute(Mat img)
+void ApriltagDetect::execute(Mat img, double lastLatencyVal)
 {
+  PhotonCompat::PhotonPacket packet;
+  packet.latency = lastLatencyVal;
 
-  std::vector<uint8_t> packet = {};
-  // Latency: double
-  encodeDouble(rand()*50, packet);
   Mat greyImg;
   cvtColor(img, greyImg, COLOR_BGR2GRAY);
 
   // Make an image_u8_t header for the Mat data
   image_u8_t frame = { .width = greyImg.cols, .height = greyImg.rows, .stride = greyImg.cols, .buf = greyImg.data };
 
-  zarray_t* detections = apriltag_detector_detect(detector, &frame);
-  // Detection count: uint8_t
-  encodeByte(zarray_size(detections), packet);
+  zarray_t* detections = apriltag_detector_detect(detector, &frame);  
+  packet.detections.reserve(zarray_size(detections));
 
-  /* Do stuff with detections here */
-  // Draw detection outlines
   for (int i = 0; i < zarray_size(detections); i++)
   {
-
+    PhotonCompat::PhotonDetection detection;
     apriltag_detection_t* det;
     zarray_get(detections, i, &det);
 
     if(det->hamming > Config::atag->hammingThreshold) { continue; }
     if(det->decision_margin < Config::atag->decisionMarginThreshold) { continue; }
 
-    // Extract the yaw angle (rotation around the Z axis)
-    double yaw = atan2(det->H->data[1], det->H->data[0]);
+    detection.tagId = det->id;
 
-    // Extract the pitch angle (rotation around the Y axis)
-    double pitch = atan2(-det->H->data[2], sqrt(det->H->data[6]*det->H->data[6] + det->H->data[10]*det->H->data[10]));
+    detection.yaw = atan2(det->H->data[1], det->H->data[0]);
+    detection.pitch = atan2(-det->H->data[2], sqrt(det->H->data[6]*det->H->data[6] + det->H->data[10]*det->H->data[10]));
+    detection.skew = atan2(det->H->data[6], det->H->data[10]);
+    detection.area = calc_tag_area(det);
 
-    // Extract the skew angle
-    double skew = atan2(det->H->data[6], det->H->data[10]);
-
-    double area = calc_tag_area(det);
-
-    if(area < Config::atag->areaThreshold) { continue; }
+    if(detection.area < Config::atag->areaThreshold) { continue; }
 
     printf("tag no %d id: %d\n", i, det->id);
 
-    encodeDouble(yaw, packet);
-    encodeDouble(pitch, packet);
-    encodeDouble(area, packet);
-    encodeDouble(skew, packet);
-
-    encodeInt(det->id, packet);
-
     apriltag_detection_info_t info;
     info.det = det;
+    /* Tags are 6 inches */
     info.tagsize = (6.0 * 0.0254);
     info.fx = Config::cam->fx;
     info.fy = Config::cam->fy;
@@ -87,44 +73,20 @@ void ApriltagDetect::execute(Mat img)
     apriltag_pose_t pose;
     double err1, err2;
     double err = estimate_tag_pose(&info, &pose, &err1, &err2);
+    detection.poseAmbiguity = calculate_pose_ambiguity(err1, err2);
 
-    // I sure hope this works, this code is AI generated because i do not understand this math
-    // Anyways, it is supposed to convert the pose rotation matrix to a quaternion
-    double qw = sqrt(1 + MATD_EL(pose.R, 0, 0) + MATD_EL(pose.R, 1, 1) + MATD_EL(pose.R, 2, 2)) / 2;
-    double qx = (MATD_EL(pose.R, 2, 1) - MATD_EL(pose.R, 1, 2)) / (4 * qw);
-    double qy = (MATD_EL(pose.R, 0, 2) - MATD_EL(pose.R, 2, 0)) / (4 * qw);
-    double qz = (MATD_EL(pose.R, 1, 0) - MATD_EL(pose.R, 0, 1)) / (4 * qw);
+    detection.pose.pos.tx = pose.t->data[0];
+    detection.pose.pos.ty = pose.t->data[1];
+    detection.pose.pos.tz = pose.t->data[2];
+    detection.pose.rot.populate_from_rot_matrix(pose.R);
 
-    // x translation
-    encodeDouble(pose.t->data[0], packet);
-    // y translation
-    encodeDouble(pose.t->data[1], packet);
-    // z translation
-    encodeDouble(pose.t->data[2], packet);
-
-    encodeDouble(qw, packet);
-    encodeDouble(qx, packet);
-    encodeDouble(qy, packet);
-    encodeDouble(qz, packet);
-
-    // Calculate pose ambiguity
-    {
-      double min = std::min(err1, err2);
-      double max = std::max(err1, err2);
-
-      if (max > 0) {
-        encodeDouble(min / max, packet);
-      } else {
-        encodeDouble(-1, packet);
-      }
-    };
-
-    // Send tag corners
+    // Tag corners
     for(int i = 0; i <= 3; i++) {
-      encodeDouble(det->p[i][0], packet);
-      encodeDouble(det->p[i][1], packet);
+      PhotonCompat::Translation2d corner;
+      corner.tx = det->p[i][0];
+      corner.ty = det->p[i][1];
+      detection.tagCorners.push_back(corner);
     }
-
 
     // Draw boxes around detected tags
     {
@@ -143,22 +105,10 @@ void ApriltagDetect::execute(Mat img)
       putText(img, text, Point(det->c[0] - textsize.width / 2, det->c[1] + textsize.height / 2), FONT, fontscale,
               Scalar(0xff, 0x99, 0), 2);
     };
-
+    packet.detections.push_back(detection);
   }
-
-  heartbeat++;
-  std::basic_string_view sv(reinterpret_cast<char*>(packet.data()), packet.size());
-  #ifdef ENCODING_DEBUG
-  if(zarray_size(detections) > 0) { 
-  for(int i=0; i < packet.size(); i++) {
-    printf("%02x ", packet.at(i));
-  }
-  printf("\n");
-  }
-  #endif
-  nt::SetEntryTypeValue(nt::GetEntry(this->ntInst, Config::nt->fullPath+"/rawBytes"), nt::Value::MakeRaw(sv));
-  nt::SetEntryTypeValue(nt::GetEntry(this->ntInst, Config::nt->fullPath+"/heartbeat"), nt::Value::MakeDouble(heartbeat));
-  nt::SetEntryTypeValue(nt::GetEntry(this->ntInst, Config::nt->rootPrefix+"/version"), nt::Value::MakeString(Config::nt->reportPhotonVersion));
+  std::vector<uint8_t> packetBytes = packet.serialize();
+  PhotonCompat::PhotonPacket::publish_packet_to_nt(this->ntInst, packetBytes);
   apriltag_detections_destroy(detections);
 }
 
@@ -198,45 +148,13 @@ double ApriltagDetect::calc_tag_area(apriltag_detection_t* detection) {
   return area;
 }
 
-void ApriltagDetect::encodeDouble(double src, std::vector<uint8_t>& packetData) {
-    uint64_t data = *reinterpret_cast<uint64_t*>(&src);
-    packetData.push_back(static_cast<uint8_t>((data >> 56) & 0xff));
-    packetData.push_back(static_cast<uint8_t>((data >> 48) & 0xff));
-    packetData.push_back(static_cast<uint8_t>((data >> 40) & 0xff));
-    packetData.push_back(static_cast<uint8_t>((data >> 32) & 0xff));
-    packetData.push_back(static_cast<uint8_t>((data >> 24) & 0xff));
-    packetData.push_back(static_cast<uint8_t>((data >> 16) & 0xff));
-    packetData.push_back(static_cast<uint8_t>((data >> 8) & 0xff));
-    packetData.push_back(static_cast<uint8_t>(data & 0xff));
+double ApriltagDetect::calculate_pose_ambiguity(double err1, double err2) {
+  double min = std::min(err1, err2);
+  double max = std::max(err1, err2);
 
-    #ifdef ENCODING_DEBUG
-    printf("[double] Encoding %f as ", src);
-    for(int i=packetData.size()-8; i < packetData.size(); i++) {
-      printf("%02x ", packetData.at(i));
-    }
-    printf("\n");
-    #endif
-
-}
-
-
-void ApriltagDetect::encodeInt(int src, std::vector<uint8_t>& packetData) {
-    packetData.push_back(static_cast<uint8_t>(src >> 24));
-    packetData.push_back(static_cast<uint8_t>(src >> 16));
-    packetData.push_back(static_cast<uint8_t>(src >> 8));
-    packetData.push_back(static_cast<uint8_t>(src));
-    #ifdef ENCODING_DEBUG
-    printf("[int] Encoding %d as ", src);
-    for(int i=packetData.size()-4; i < packetData.size(); i++) {
-      printf("%02x ", packetData.at(i));
-    }
-    printf("\n");
-    #endif
-}
-
-void ApriltagDetect::encodeByte(uint8_t src, std::vector<uint8_t>& packetData) {
-    packetData.push_back(static_cast<uint8_t>(src));
-    #ifdef ENCODING_DEBUG
-    printf("[byte] Encoding %d as %02x\n", src, src);
-    #endif
+  if (max > 0) {
+    return min / max;
+  } else {
+    return -1;
+  }
 }

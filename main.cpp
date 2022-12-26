@@ -82,12 +82,13 @@ int main(int argc, char** argv )
     ApriltagDetect detector(config, ntInst);
     Mat img;
     TickMeter meter;
+    double lastLoopTime = 0;
     while(true) {
         cap >> img;
         meter.start();
         waitKey(1);
 
-        detector.execute(img);
+        detector.execute(img, lastLoopTime);
 
         /* FPS Meter Rendering*/
         int fontSize = 2;
@@ -100,6 +101,7 @@ int main(int argc, char** argv )
 
         writer.write(img);
         meter.stop();
+        lastLoopTime = meter.getAvgTimeMilli();
     }
     return 0;
 }
