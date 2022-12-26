@@ -9,6 +9,7 @@
             "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/build/vision",
+            "cwd": "${workspaceFolder}/build",
             "sourceLanguages": ["c++"],
             "reverseDebugging": true
         },
@@ -19,7 +20,7 @@
             "program": "${workspaceFolder}/build/vision",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/build",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",

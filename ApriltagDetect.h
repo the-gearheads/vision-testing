@@ -5,7 +5,7 @@ class ApriltagDetect {
   ApriltagDetect(json config, NT_Inst ntInst);
   ~ApriltagDetect();
   /* Do detections, draw on the frame*/
-  void execute(Mat img);
+  void execute(Mat img, double lastLatencyVal);
   /* Currently no-op */
   void reconfigure_detector();
 
@@ -17,8 +17,6 @@ class ApriltagDetect {
   NT_Inst ntInst;
 
   double estimate_tag_pose(apriltag_detection_info_t* info, apriltag_pose_t* pose, double* err1, double* err2);
+  double calculate_pose_ambiguity(double err1, double err2);
   double calc_tag_area(apriltag_detection_t* detection);
-  void encodeDouble(double src, std::vector<uint8_t>& packetData);
-  void encodeInt(int src, std::vector<uint8_t>& packetData);
-  void encodeByte(uint8_t src, std::vector<uint8_t>& packetData);
 };
