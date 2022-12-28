@@ -61,6 +61,12 @@ std::vector<uint8_t> PhotonCompat::Translation3d::serialize() {
   return out;
 }
 
+void PhotonCompat::Translation3d::populate_from_mat(matd_t* mat) {
+  this->tx = mat->data[0];
+  this->ty = mat->data[1];
+  this->tz = mat->data[2];
+}
+
 std::vector<uint8_t> PhotonCompat::Translation2d::serialize() {
   std::vector<uint8_t> out;
   encodeDouble(this->tx, out);
@@ -97,10 +103,14 @@ std::vector<uint8_t> PhotonCompat::PhotonDetection::serialize() {
   std::vector<uint8_t> out;
   encodeDouble(this->yaw, out);
   encodeDouble(this->pitch, out);
-  encodeDouble(this->skew, out);
   encodeDouble(this->area, out);
+  encodeDouble(this->skew, out);
   encodeInt(this->tagId, out);
-  ADD_VECTOR(out, this->pose.serialize());
+  ADD_VECTOR(out, this->bestPose.serialize());
+  /* This field only exists if photonlib is at or newer than beta 4 */
+  if(!Config::nt->pre_beta_4_compat) {
+    ADD_VECTOR(out, this->altPose.serialize());
+  }
   encodeDouble(this->poseAmbiguity, out);
 
   for(Translation2d t: this->tagCorners) {

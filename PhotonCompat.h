@@ -15,6 +15,7 @@ namespace PhotonCompat {
     double tx = E_EMPTYFIELD;
     double ty = E_EMPTYFIELD;
     double tz = E_EMPTYFIELD;
+    void populate_from_mat(matd_t* mat);
     std::vector<uint8_t> serialize();
   };
 
@@ -42,7 +43,9 @@ namespace PhotonCompat {
     double pitch = E_EMPTYFIELD;
     double area = E_EMPTYFIELD;
     double skew = E_EMPTYFIELD;
-    Transform pose;
+    Transform bestPose;
+    /* Only exists on versions on or newer than v2023.1.1-beta-4 */
+    Transform altPose;
     double poseAmbiguity;
     std::vector<Translation2d> tagCorners;
     std::vector<uint8_t> serialize();

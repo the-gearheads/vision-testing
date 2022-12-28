@@ -25,6 +25,7 @@ class NTSettings {
     std::string targetName;
     std::string fullPath;
     std::string reportPhotonVersion;
+    bool pre_beta_4_compat;
 };
 
 #define FOURCC(a,b,c,d) ( (uint32_t) (((d)<<24) | ((c)<<16) | ((b)<<8) | (a)) )

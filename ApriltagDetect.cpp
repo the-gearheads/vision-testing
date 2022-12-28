@@ -70,15 +70,20 @@ void ApriltagDetect::execute(Mat img, double lastLatencyVal)
     info.cx = Config::cam->cx;
     info.cy = Config::cam->cy;
 
-    apriltag_pose_t pose;
+    apriltag_pose_t pose, altPose;
     double err1, err2;
-    double err = estimate_tag_pose(&info, &pose, &err1, &err2);
+    double err = estimate_tag_pose(&info, &pose, &altPose, &err1, &err2);
     detection.poseAmbiguity = calculate_pose_ambiguity(err1, err2);
 
-    detection.pose.pos.tx = pose.t->data[0];
-    detection.pose.pos.ty = pose.t->data[1];
-    detection.pose.pos.tz = pose.t->data[2];
-    detection.pose.rot.populate_from_rot_matrix(pose.R);
+    detection.bestPose.pos.populate_from_mat(pose.t);
+    detection.bestPose.rot.populate_from_rot_matrix(pose.R);
+    matd_destroy(pose.R);
+    matd_destroy(pose.t);
+
+    detection.altPose.pos.populate_from_mat(altPose.t);
+    detection.altPose.rot.populate_from_rot_matrix(altPose.R);
+    matd_destroy(altPose.R);
+    matd_destroy(altPose.t);
 
     // Tag corners
     for(int i = 0; i <= 3; i++) {
@@ -115,22 +120,22 @@ void ApriltagDetect::execute(Mat img, double lastLatencyVal)
 /**
  * Estimate tag pose. Copied from apriltag_pose.c, modified to return err1 and err2.
  */
-double ApriltagDetect::estimate_tag_pose(apriltag_detection_info_t* info, apriltag_pose_t* pose, double* err1, double* err2) {
+double ApriltagDetect::estimate_tag_pose(apriltag_detection_info_t* info, apriltag_pose_t* pose, apriltag_pose_t* altPose, double* err1, double* err2) {
     apriltag_pose_t pose1, pose2;
     estimate_tag_pose_orthogonal_iteration(info, err1, &pose1, err2, &pose2, 50);
     if (*err1 <= *err2) {
         pose->R = pose1.R;
         pose->t = pose1.t;
         if (pose2.R) {
-            matd_destroy(pose2.t);
+            altPose->R = pose2.R;
+            altPose->t = pose2.t;
         }
-        matd_destroy(pose2.R);
         return *err1;
     } else {
         pose->R = pose2.R;
         pose->t = pose2.t;
-        matd_destroy(pose1.R);
-        matd_destroy(pose1.t);
+        altPose->R = pose1.R;
+        altPose->t = pose1.t;
         return *err2;
     }
 }

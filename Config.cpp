@@ -70,8 +70,9 @@ void Config::config_nt(json config) {
     bool is_server = config.value("nt_server", false);
     nt->rootPrefix = config.value("nt_prefix", "/photonvision");
     nt->targetName = config.value("target_name", "target");
+    nt->pre_beta_4_compat = config.value("pre_2023_1_1_beta_compat", false);
     nt->fullPath = nt->rootPrefix + "/" + nt->targetName;
-    nt->reportPhotonVersion = config.value("report_photon_version", "v2023.1.1-beta-3");
+    nt->reportPhotonVersion = config.value("report_photon_version", "v2023.1.1-beta-6");
     std::string teamnum_or_ip = config.value("nt_client_ip_or_teamnum", "127.0.0.1");
     /* If there isn't a . in the string, it's like a team number */
     bool is_team_num = (teamnum_or_ip.find(".") == std::string::npos);

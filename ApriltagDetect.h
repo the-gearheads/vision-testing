@@ -16,7 +16,7 @@ class ApriltagDetect {
   apriltag_detector_t* detector;
   NT_Inst ntInst;
 
-  double estimate_tag_pose(apriltag_detection_info_t* info, apriltag_pose_t* pose, double* err1, double* err2);
+  double estimate_tag_pose(apriltag_detection_info_t* info, apriltag_pose_t* pose, apriltag_pose_t* altPose, double* err1, double* err2);
   double calculate_pose_ambiguity(double err1, double err2);
   double calc_tag_area(apriltag_detection_t* detection);
 };
