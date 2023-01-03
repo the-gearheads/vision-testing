@@ -51,7 +51,7 @@ void ApriltagDetect::execute(Mat img, double lastLatencyVal)
 
   for (int i = 0; i < zarray_size(detections); i++)
   {
-    ZoneScopedN("Iterating over all detections, perfoming pose estimation, and formatting into packet");
+    ZoneScopedNS("Iterating over all detections, perfoming pose estimation, and formatting into packet", 10);
     PhotonCompat::PhotonDetection detection;
     apriltag_detection_t* det;
     zarray_get(detections, i, &det);

@@ -1,5 +1,6 @@
 #include "ApriltagDetect.h"
 #include "Config.h"
+#include "TracyFrameNames.h"
 
 /* Port and host added later */
 #define UDPSINK_PIPELINE "rtph264pay config-interval=1 ! udpsink sync=false"
@@ -85,14 +86,16 @@ int main(int argc, char** argv )
     TickMeter meter;
     double lastLoopTime = 0;
     while(true) {
-        ZoneScopedN("Main loop");
+        ZoneScopedNS("Main loop", 10);
+        FrameMarkStart(tcy_grabbing_video_frame);
         cap >> img;
+        FrameMarkEnd(tcy_grabbing_video_frame);
         meter.start();
-        waitKey(1);
 
         detector.execute(img, lastLoopTime);
 
         /* FPS Meter Rendering*/
+        FrameMarkStart(tcy_render_meter);
         int fontSize = 2;
         int baseline;
         std::string fps = std::to_string(meter.getFPS()) + " FPS";
@@ -100,8 +103,10 @@ int main(int argc, char** argv )
         /* Offset it 100px down */
         ts.height += 100;
         putText(img, fps, ts, FONT, fontSize, Scalar(255, 255, 255), 2);
-
+        FrameMarkEnd(tcy_render_meter);
+        FrameMarkStart(tcy_opencv_videowriter_write);
         writer.write(img);
+        FrameMarkEnd(tcy_opencv_videowriter_write);
         meter.stop();
         lastLoopTime = meter.getAvgTimeMilli();
         FrameMark;

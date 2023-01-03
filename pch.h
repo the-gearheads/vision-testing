@@ -8,6 +8,7 @@
 #include <thread>
 #include "json.hpp"
 
+#define TRACY_SAMPLING_HZ 50000
 #include <tracy/Tracy.hpp>
 
 extern "C" {
