@@ -4,13 +4,20 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
+# Use -DTRACY_ENABLE=ON if you would like to profile
+if(NOT TRACY_ENABLE)
+  option(TRACY_ENABLE OFF)
+endif()
+
 project( vision )
 find_package( OpenCV REQUIRED )
 
 set(CMAKE_CXX_STANDARD 20)
 
+add_subdirectory( tracy ) 
+
 if(MSVC)
-# Been struggling to get this working; cmake adds incompatible /rtc1
+# Been struggling to get this working; cmake adds incompatible /rtc1, not that it matters much since our production target isn't Windows.
 #	add_compile_options(/O2)
 ELSE()
 	add_compile_options(-Ofast)
@@ -18,7 +25,7 @@ ENDIF()
 
 set(NtCore_INCLUDE_DIRS nt-vendor/ntcore/src/main/native/include nt-vendor/wpiutil/src/main/native/include)
 include_directories( ${OpenCV_INCLUDE_DIRS} )
-add_executable( vision main.cpp ApriltagDetect.cpp Config.cpp PhotonCompat.cpp )
+add_executable( vision main.cpp ApriltagDetect.cpp Config.cpp PhotonCompat.cpp TracyFrameNames.cpp )
 
 # Kinda hacky but it works -enough- 
 
@@ -37,5 +44,5 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/nt-vendor/cmake/modules)
 add_subdirectory(nt-vendor/wpiutil/ EXCLUDE_FROM_ALL)
 add_subdirectory(nt-vendor/ntcore/ EXCLUDE_FROM_ALL)
 
-target_link_libraries( vision apriltag ntcore ${OpenCV_LIBS} )
+target_link_libraries( vision PUBLIC apriltag ntcore ${OpenCV_LIBS} Tracy::TracyClient )
 target_precompile_headers(vision PRIVATE pch.h)

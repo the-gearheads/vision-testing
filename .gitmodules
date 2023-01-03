@@ -4,3 +4,6 @@
 [submodule "nt-vendor"]
 	path = nt-vendor
 	url = https://github.com/the-gearheads/ntcore-vendor.git
+[submodule "tracy"]
+	path = tracy
+	url = https://github.com/wolfpld/tracy.git

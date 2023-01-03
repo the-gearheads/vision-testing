@@ -23,6 +23,7 @@ void start_nt(NT_Inst ntInst) {
 
 int main(int argc, char** argv )
 {
+    ZoneScoped;
     std::string config_path = "config.json";
     if(argc > 1) {
         config_path = argv[1];
@@ -84,6 +85,7 @@ int main(int argc, char** argv )
     TickMeter meter;
     double lastLoopTime = 0;
     while(true) {
+        ZoneScopedN("Main loop");
         cap >> img;
         meter.start();
         waitKey(1);
@@ -102,6 +104,7 @@ int main(int argc, char** argv )
         writer.write(img);
         meter.stop();
         lastLoopTime = meter.getAvgTimeMilli();
+        FrameMark;
     }
     return 0;
 }

@@ -8,6 +8,8 @@
 #include <thread>
 #include "json.hpp"
 
+#include <tracy/Tracy.hpp>
+
 extern "C" {
 #include "apriltag.h"
 #include "apriltag_pose.h"

@@ -1,5 +1,6 @@
 #include "ApriltagDetect.h"
 #include "PhotonCompat.h"
+#include "TracyFrameNames.h"
 #include "Config.h"
 #include <cstdlib>
 #include <ctime>
@@ -29,20 +30,28 @@ ApriltagDetect::~ApriltagDetect()
 
 void ApriltagDetect::execute(Mat img, double lastLatencyVal)
 {
+  ZoneScoped;
   PhotonCompat::PhotonPacket packet;
   packet.latency = lastLatencyVal;
 
+  FrameMarkStart(tcy_opencv_bgr2gray);
   Mat greyImg;
   cvtColor(img, greyImg, COLOR_BGR2GRAY);
+  FrameMarkEnd(tcy_opencv_bgr2gray);
+
+  FrameMarkStart(tcy_apriltag_detect);
 
   // Make an image_u8_t header for the Mat data
   image_u8_t frame = { .width = greyImg.cols, .height = greyImg.rows, .stride = greyImg.cols, .buf = greyImg.data };
 
-  zarray_t* detections = apriltag_detector_detect(detector, &frame);  
+  zarray_t* detections = apriltag_detector_detect(detector, &frame); 
+  FrameMarkEnd(tcy_apriltag_detect);
+
   packet.detections.reserve(zarray_size(detections));
 
   for (int i = 0; i < zarray_size(detections); i++)
   {
+    ZoneScopedN("Iterating over all detections, perfoming pose estimation, and formatting into packet");
     PhotonCompat::PhotonDetection detection;
     apriltag_detection_t* det;
     zarray_get(detections, i, &det);
@@ -121,6 +130,7 @@ void ApriltagDetect::execute(Mat img, double lastLatencyVal)
  * Estimate tag pose. Copied from apriltag_pose.c, modified to return err1 and err2.
  */
 double ApriltagDetect::estimate_tag_pose(apriltag_detection_info_t* info, apriltag_pose_t* pose, apriltag_pose_t* altPose, double* err1, double* err2) {
+    ZoneScoped;
     apriltag_pose_t pose1, pose2;
     estimate_tag_pose_orthogonal_iteration(info, err1, &pose1, err2, &pose2, 50);
     if (*err1 <= *err2) {
@@ -141,6 +151,7 @@ double ApriltagDetect::estimate_tag_pose(apriltag_detection_info_t* info, aprilt
 }
 
 double ApriltagDetect::calc_tag_area(apriltag_detection_t* detection) {
+  ZoneScoped;
   // Compute the vectors connecting the corner points of the projection
   double v1[2] = {detection->p[1][0] - detection->p[0][0], detection->p[1][1] - detection->p[0][1]};
   double v2[2] = {detection->p[2][0] - detection->p[0][0], detection->p[2][1] - detection->p[0][1]};
@@ -154,6 +165,7 @@ double ApriltagDetect::calc_tag_area(apriltag_detection_t* detection) {
 }
 
 double ApriltagDetect::calculate_pose_ambiguity(double err1, double err2) {
+  ZoneScoped;
   double min = std::min(err1, err2);
   double max = std::max(err1, err2);
 
