@@ -29,7 +29,7 @@ void Config::config_cam(json config) {
     cam->cx = config.value("cam_intrinsics_cx", 160);
     cam->cy = config.value("cam_intrinsics_cy", 90);
 
-    std::string fourcc = config.value("cam_fourcc", "");
+    std::string fourcc = config.value("force_fourcc", "");
     if (fourcc.length() == 4) {
         cam->force_fourcc = FOURCC(fourcc[0], fourcc[1], fourcc[2], fourcc[3]);
     } else {
@@ -64,6 +64,7 @@ void Config::config_apriltag(json config) {
     atag->debug = config.value("apriltag_debug", false);
     atag->areaThreshold = config.value("area_threshold", 0.0);
     atag->hammingThreshold = config.value("hamming_threshold", 1);
+    atag->decisionMarginThreshold = config.value("decision_margin_threshold", 0.0);
 }
 
 void Config::config_nt(json config) {

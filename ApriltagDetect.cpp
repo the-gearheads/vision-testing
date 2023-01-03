@@ -59,7 +59,7 @@ void ApriltagDetect::execute(Mat img, double lastLatencyVal)
 
     if(detection.area < Config::atag->areaThreshold) { continue; }
 
-    printf("tag no %d id: %d\n", i, det->id);
+    printf("tag no %d id: %d dm: %f ham: %d area: %f\n", i, det->id, det->decision_margin, det->hamming, detection.area);
 
     apriltag_detection_info_t info;
     info.det = det;
