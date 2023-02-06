@@ -88,7 +88,9 @@ int main(int argc, char** argv )
         meter.start();
         waitKey(1);
 
-        detector.execute(img, lastLoopTime);
+        if(Config::atag->enabled) {
+            detector.execute(img, lastLoopTime);
+        }
 
         /* FPS Meter Rendering*/
         int fontSize = 2;

@@ -54,6 +54,7 @@ void Config::config_cam(json config) {
 }
 
 void Config::config_apriltag(json config) {
+    atag->enabled = config.value("tag_detection_enabled", true);
     atag->blur = config.value("apriltag_blur", 2.0);
     atag->quad_decimate = config.value("apriltag_quad_decimate", 4.0);
     atag->threads = config.value("apriltag_threads", 0);

@@ -1,6 +1,7 @@
 #pragma once
 class ApriltagSettings {
     public:
+    bool enabled;
     float quad_decimate;
     float blur;
     bool debug;

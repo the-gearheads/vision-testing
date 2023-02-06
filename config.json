@@ -10,6 +10,8 @@
     "cam_intrinsics_cx": 160,
     "cam_intrinsics_cy": 90,
 
+    "tag_detection_enabled": true,
+
     // Fource a video mode, such as MJPG or YUYV
     "force_fourcc": "MJPG",
     // Valid options are any, gstreamer, dshow, and v4l2
