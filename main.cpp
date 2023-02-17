@@ -4,7 +4,8 @@
 /* Port and host added later */
 #define UDPSINK_PIPELINE "rtph264pay config-interval=1 ! udpsink sync=false"
 
-#define HWENC_PIPELINE "appsrc ! videoconvert ! v4l2h264enc extra-controls=controls,h264_profile=0,video_bitrate_mode=0,video_bitrate=3000000,h264_i_frame_period=1 ! video/x-h264,level=(string)5 ! h264parse ! " UDPSINK_PIPELINE
+#define PIHWENC_PIPELINE "appsrc ! videoconvert ! v4l2h264enc extra-controls=controls,h264_profile=0,video_bitrate_mode=0,video_bitrate=3000000,h264_i_frame_period=1 ! video/x-h264,level=(string)5 ! h264parse ! " UDPSINK_PIPELINE
+#define VAHWENC_PIPELINE "appsrc ! videoconvert ! vaapipostproc ! vaapih264enc rate-control=vbr bitrate=3000 ! video/x-h264,profile=(string)high ! h264parse ! " UDPSINK_PIPELINE
 #define SOFTWARE_PIPELINE "appsrc ! videoconvert ! x264enc tune=zerolatency bitrate=1000 ! video/x-h264, level=(string)5 ! h264parse ! " UDPSINK_PIPELINE
 
 void start_nt(NT_Inst ntInst) {
@@ -64,8 +65,10 @@ int main(int argc, char** argv )
     printf("%dx%d @ %dfps\n", width, height, fps);
 
     std::stringstream pipeline("");
-    if(Config::cam->use_hwenc) {
-        pipeline << HWENC_PIPELINE;
+    if(Config::cam->pi_hwenc) {
+        pipeline << PIHWENC_PIPELINE;
+    } else if (Config::cam->va_hwenc) {
+        pipeline << VAHWENC_PIPELINE;
     } else {
         pipeline << SOFTWARE_PIPELINE;
     }
@@ -76,8 +79,10 @@ int main(int argc, char** argv )
 
     /* Initialize NetworkTables */
     NT_Inst ntInst = nt::GetDefaultInstance();
-    start_nt(ntInst);
-    nt::SetNetworkIdentity(ntInst, "vision");
+    if(Config::atag->enabled) {
+        start_nt(ntInst);
+        nt::SetNetworkIdentity(ntInst, "vision");
+    }
 
     ApriltagDetect detector(config, ntInst);
     Mat img;
@@ -93,13 +98,16 @@ int main(int argc, char** argv )
         }
 
         /* FPS Meter Rendering*/
-        int fontSize = 2;
-        int baseline;
-        std::string fps = std::to_string(meter.getFPS()) + " FPS";
-        Size ts = getTextSize(fps, FONT, fontSize, 2, &baseline);
-        /* Offset it 100px down */
-        ts.height += 100;
-        putText(img, fps, ts, FONT, fontSize, Scalar(255, 255, 255), 2);
+        if(Config::cam->show_fps) {
+            int fontSize = 2;
+            int baseline;
+            std::string fps = std::to_string(meter.getFPS()) + " FPS";
+            Size ts = getTextSize(fps, FONT, fontSize, 2, &baseline);
+            /* Offset it 100px down */
+            ts.height += 100;
+            putText(img, fps, ts, FONT, fontSize, Scalar(255, 255, 255), 2);
+
+        }
 
         writer.write(img);
         meter.stop();

@@ -20,8 +20,13 @@
     // Host to send UDP stream to
     "cam_broadcast_ip": "255.255.255.255",
     "cam_broadcast_port": 1189,
-    // Whether to use V4L2 hardware encoding pipeline. Likely only works on Pi4.
+    // Whether to use V4L2 hardware encoding pipeline. Tuned for Pi4.
     "pihwenc": false,
+    // Whether to use VA-API based hardware encoding. Meant for PCs.
+    "vahwenc": false,
+
+    // Whether to render FPS meter on top of stream.
+    "show_fps": false,
 
     // Whether to host a networktables server or not
     "nt_server": false,

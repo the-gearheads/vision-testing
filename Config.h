@@ -43,7 +43,9 @@ class CameraSettings {
     int width, height, fps;
     int force_fourcc;
     int id;
-    bool use_hwenc;
+    bool pi_hwenc;
+    bool va_hwenc;
+    bool show_fps;
     std::string ip;
     unsigned int port;
     CameraBackend backend;

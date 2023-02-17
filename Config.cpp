@@ -21,7 +21,9 @@ void Config::config_cam(json config) {
     cam->height = config.value("cam_height", 480);
     cam->fps = config.value("cam_fps", 30);
     cam->id = config.value("cam_id", 0);
-    cam->use_hwenc = config.value("pihwenc", false);
+    cam->pi_hwenc = config.value("pihwenc", false);
+    cam->va_hwenc = config.value("vahwenc", false);
+    cam->show_fps = config.value("show_fps", false);
     cam->ip = config.value("cam_broadcast_ip", "255.255.255.255");
     cam->port = config.value("cam_broadcast_port", 5010);
     cam->fx = config.value("cam_intrinsics_fx", 16);
