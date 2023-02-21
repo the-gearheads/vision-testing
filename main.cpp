@@ -5,7 +5,7 @@
 #define UDPSINK_PIPELINE "rtph264pay config-interval=1 ! udpsink sync=false"
 
 #define PIHWENC_PIPELINE "appsrc ! videoconvert ! v4l2h264enc extra-controls=controls,h264_profile=0,video_bitrate_mode=0,video_bitrate=3000000,h264_i_frame_period=1 ! video/x-h264,level=(string)5 ! h264parse ! " UDPSINK_PIPELINE
-#define VAHWENC_PIPELINE "appsrc ! videoconvert ! vaapipostproc ! vaapih264enc rate-control=vbr bitrate=3000 ! video/x-h264,profile=(string)high ! h264parse ! " UDPSINK_PIPELINE
+#define VAHWENC_PIPELINE "appsrc ! videoconvert ! vaapih264enc rate-control=vbr bitrate=3000 ! video/x-h264,profile=(string)high ! h264parse ! " UDPSINK_PIPELINE
 #define SOFTWARE_PIPELINE "appsrc ! videoconvert ! x264enc tune=zerolatency bitrate=1000 ! video/x-h264, level=(string)5 ! h264parse ! " UDPSINK_PIPELINE
 
 void start_nt(NT_Inst ntInst) {
@@ -20,6 +20,11 @@ void start_nt(NT_Inst ntInst) {
             nt::StartServer(ntInst, "./persistent.ini", Config::nt->ip.c_str(), Config::nt->port);
             break;
    }
+}
+
+bool exists(std::string fName) {
+    std::ifstream f(fName.c_str());
+    return f.good();
 }
 
 int main(int argc, char** argv )
@@ -42,6 +47,11 @@ int main(int argc, char** argv )
     }
 
     Config::init(config);
+
+    if(!exists(Config::cam->name)) {
+        std::cout << "Camera " << Config::cam->name << " does not exist. Exiting" << std::endl;
+        std::exit(-5);
+    }
 
     VideoCapture cap = VideoCapture(Config::cam->name, Config::cam->backend);
 
@@ -88,6 +98,7 @@ int main(int argc, char** argv )
     Mat img;
     TickMeter meter;
     double lastLoopTime = 0;
+    int counter = 0;
     while(true) {
         cap >> img;
         meter.start();
@@ -95,6 +106,13 @@ int main(int argc, char** argv )
 
         if(Config::atag->enabled) {
             detector.execute(img, lastLoopTime);
+        }
+
+        if(counter % 10 == 0) {
+            if(!exists(Config::cam->name)) {
+                std::cout << "Camera " << Config::cam->name << " has stopped existing. Exiting" << std::endl;
+                std::exit(-5);
+            }
         }
 
         /* FPS Meter Rendering*/
