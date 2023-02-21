@@ -20,7 +20,7 @@ void Config::config_cam(json config) {
     cam->width = config.value("cam_width", 640);
     cam->height = config.value("cam_height", 480);
     cam->fps = config.value("cam_fps", 30);
-    cam->id = config.value("cam_id", 0);
+    cam->name = config.value("cam_name", "/dev/video0");
     cam->pi_hwenc = config.value("pihwenc", false);
     cam->va_hwenc = config.value("vahwenc", false);
     cam->show_fps = config.value("show_fps", false);

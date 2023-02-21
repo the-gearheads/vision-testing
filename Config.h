@@ -42,7 +42,7 @@ class CameraSettings {
     public:
     int width, height, fps;
     int force_fourcc;
-    int id;
+    std::string name;
     bool pi_hwenc;
     bool va_hwenc;
     bool show_fps;

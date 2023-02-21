@@ -43,10 +43,10 @@ int main(int argc, char** argv )
 
     Config::init(config);
 
-    VideoCapture cap = VideoCapture(Config::cam->id, Config::cam->backend);
+    VideoCapture cap = VideoCapture(Config::cam->name, Config::cam->backend);
 
     if(!cap.isOpened()) {
-        printf("Couldn't open camera %d\n", Config::cam->id);
+        printf("Couldn't open camera %d\n", Config::cam->name);
         exit(-1);
     }
 
