@@ -23,7 +23,7 @@ ELSE()
 	add_compile_options(-Ofast)
 ENDIF()
 
-set(NtCore_INCLUDE_DIRS nt-vendor/ntcore/src/main/native/include nt-vendor/wpiutil/src/main/native/include)
+set(NtCore_INCLUDE_DIRS nt-vendor/wpiutil/src/main/native/include nt-vendor/wpinet/src/main/native/include nt-vendor/ntcore/src/main/native/include)
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 add_executable( vision main.cpp ApriltagDetect.cpp Config.cpp PhotonCompat.cpp TracyFrameNames.cpp )
 
@@ -42,6 +42,7 @@ if(!MSVC)
 ENDIF()
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/nt-vendor/cmake/modules)
 add_subdirectory(nt-vendor/wpiutil/ EXCLUDE_FROM_ALL)
+add_subdirectory(nt-vendor/wpinet/ EXCLUDE_FROM_ALL)
 add_subdirectory(nt-vendor/ntcore/ EXCLUDE_FROM_ALL)
 
 target_link_libraries( vision PUBLIC apriltag ntcore ${OpenCV_LIBS} Tracy::TracyClient )
